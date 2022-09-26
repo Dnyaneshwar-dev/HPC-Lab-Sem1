@@ -5,6 +5,12 @@
 
 #define n 100000
 
+void swap(int *a, int *b)
+{
+    int c = *a;
+    *a = *b;
+    *b = c;
+}
 int sort(int arr[])
 {
     int i, j;
@@ -12,9 +18,8 @@ int sort(int arr[])
         for (j = 0; j < n - i - 1; j++)
             if (arr[j] > arr[j + 1])
             {
-                int temp = arr[j];
-                arr[j] = arr[j + 1];
-                arr[j + 1] = temp;
+                swap(&arr[j],&arr[j+1]);
+                
             }
 }
 int sort_des(int arr[])
@@ -27,9 +32,7 @@ int sort_des(int arr[])
         {
             if (arr[i] < arr[j])
             {
-                int a = arr[i];
-                arr[i] = arr[j];
-                arr[j] = a;
+                 swap(&arr[i],&arr[j]);
             }
         }
     }
