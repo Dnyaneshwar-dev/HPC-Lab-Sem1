@@ -1,6 +1,3 @@
-/* 
-   CS288 HW10
-*/
 #include <stdio.h>
 #include <mpi.h>
 #include <unistd.h>
