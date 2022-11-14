@@ -1,102 +1,95 @@
-
-#include "mpi.h"
+/* 
+   CS288 HW10
+*/
 #include <stdio.h>
+#include <mpi.h>
+#include <unistd.h>
+#include <math.h>
+#include <time.h>
+#include <stdlib.h>
 
-#define localSize 1000
+#define NELMS 100
+#define MASTER 0
+#define MAXPROCS 16
 
-int local[1000]; // to store the subarray data comming from process 0;
+int dot_product();
+void init_lst();
+void print_lst();
 
-int main(int argc, char **argv)
-{
-    int rank;
-    int num;
+int main() {
+  int i,n,vector_x[NELMS],vector_y[NELMS];
+  int prod,sidx,eidx,size;
+  int pid,nprocs, rank;
+  double stime,etime;
+  MPI_Status status;
+  MPI_Comm world;
 
-    int N = 10;
-    int v1[N];
-    int v2[N];
+  n = 10;
+  if (n > NELMS) { printf("n=%d > N=%d\n",n,NELMS); exit(1); }
 
-    for(int i=0;i<N;i++)
-    {
-        v1[i] = i;
-        v2[i] = N - i;
-    }
-    
+  MPI_Init(NULL, NULL);
+  world = MPI_COMM_WORLD;
+  MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+  MPI_Comm_rank(MPI_COMM_WORLD, &pid);
 
-    int per_process, elements_received;
+  int portion = n / nprocs;
+  sidx = pid * portion;
+  eidx = sidx + portion;
+  init_lst(vector_x, n);
+  init_lst(vector_y, n);
+  
+  int tmp_prod[nprocs];
+  for (i = 0; i < nprocs; i++)
+    tmp_prod[i] = 0;
 
-    MPI_Init(&argc, &argv);
+  stime = MPI_Wtime();
 
-    MPI_Comm_size(MPI_COMM_WORLD, &num);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (pid == MASTER) {
+    prod = dot_product(sidx, eidx, vector_x, vector_y, n);
+    for (i = 1; i < nprocs; i++)
+      MPI_Recv(&tmp_prod[i-1], 1, MPI_INT, i, 123, MPI_COMM_WORLD, &status);
+  }
+  else {
+    prod = dot_product(sidx, eidx, vector_x, vector_y, n);
+    MPI_Send(&prod, 1, MPI_INT, MASTER, 123, MPI_COMM_WORLD);
+  }
 
-    MPI_Status status;
+  if (pid == MASTER) {
+    for (i = 0; i < nprocs; i++)
+      prod += tmp_prod[i];
+  }
+  
+  etime = MPI_Wtime();
 
-    // process with rank 0 will divide data among all processes and add partial sums to get final sum
-    if (rank == 0)
-    {
-        int index, i;
-
-        per_process = n / num;
-
-        if (num > 1) // if more than 1 processes available
-        {
-            //divide array data among processes
-            for (i = 1; i < num - 1; i++)
-            {
-                //calculating first index of subarray that need to be send to ith process
-                index = i * per_process;
-
-                //send no of elements and subarray of that lenght to each process
-                MPI_Send(&per_process, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-                MPI_Send(&arr[index], per_process, MPI_INT, i, 0, MPI_COMM_WORLD);
-            }
-
-            // for last process send all remaining elements
-            index = i * per_process;
-            int ele_left = n - index;
-
-            MPI_Send(&ele_left, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-            MPI_Send(&arr[index], ele_left, MPI_INT, i, 0, MPI_COMM_WORLD);
-        }
-
-        // add numbers on process with rank 0
-        int sum = 0;
-        for (int i = 0; i < per_process; i++)
-        {
-            sum += arr[i];
-        }
-
-        // add all partial sums from all processes
-        int tmp;
-        for (int i = 1; i < num; i++)
-        {
-            MPI_Recv(&tmp, 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
-
-            int sender = status.MPI_SOURCE;
-
-            sum += tmp;
-        }
-
-        printf("Sum of array = %d\n", sum);
-    }
-    else // if rank of process is not 0, then receive elements and calculate partial sums
-    {
-        // receive no of elements and elements form process 0 and store them on local array
-        MPI_Recv(&elements_received, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
-
-        MPI_Recv(&local, elements_received, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
-
-        // calculate partial local sum
-        int partial_sum = 0;
-        for (int i = 0; i < elements_received; i++)
-        {
-            partial_sum += local[i];
-        }
-
-        //send calculated partial sum to process with rank 0
-        MPI_Send(&partial_sum, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-    }
-
-    MPI_Finalize();
-    return 0;
+  if (pid == MASTER) {
+    print_lst(vector_x,n);
+    print_lst(vector_y,n);    
+    printf("pid=%d: final prod=%d\n",pid,prod);
+    printf("pid=%d: elapsed=%f\n",pid,etime-stime);
+  }
+  MPI_Finalize();
 }
+
+int dot_product(int s,int e, int x[], int y[], int n){
+  int i,prod=0;
+
+  for (i = s; i < e; i++)
+    prod = prod + x[i] * y[i];
+  
+  return prod;
+}
+
+void init_lst(int *l,int n){
+  int i;
+  for (i=0; i<n; i++) *l++ = i;
+}
+void print_lst(int l[],int n){
+  int i;
+
+  for (i=0; i<n; i++) {
+    printf("%d ", l[i]);
+  }
+  printf("\n");
+}
+
+// end of file
