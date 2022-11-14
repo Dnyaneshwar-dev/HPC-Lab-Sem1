@@ -5,7 +5,7 @@
 #include <time.h>
 #include <stdlib.h>
 
-#define NELMS 100
+#define NELMS 100000
 #define MASTER 0
 #define MAXPROCS 16
 
@@ -21,7 +21,7 @@ int main() {
   MPI_Status status;
   MPI_Comm world;
 
-  n = 10;
+  n = 100000;
   if (n > NELMS) { printf("n=%d > N=%d\n",n,NELMS); exit(1); }
 
   MPI_Init(NULL, NULL);
@@ -59,8 +59,8 @@ int main() {
   etime = MPI_Wtime();
 
   if (pid == MASTER) {
-    print_lst(vector_x,n);
-    print_lst(vector_y,n);    
+    //print_lst(vector_x,n);
+    //print_lst(vector_y,n);    
     printf("pid=%d: final prod=%d\n",pid,prod);
     printf("pid=%d: elapsed=%f\n",pid,etime-stime);
   }

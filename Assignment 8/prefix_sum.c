@@ -23,9 +23,12 @@ int main(int argc, char* argv[]){
 	if(my_rank == 0){
 		int i;
 		for(i = 0; i < p; ++i){
-			scanf("%d", &prefix_arr[i]);
+			prefix_arr[i] = i + 1;
 		}
 	}
+
+	double start = MPI_Wtime();
+
 	//all call scatter
 	MPI_Scatter(prefix_arr, 1, MPI_INT, &value, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -82,13 +85,13 @@ int main(int argc, char* argv[]){
 	//we gather at rank
 	int gather[p];
 	MPI_Gather(&value, 1, MPI_INT, gather, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
+	
 	if(my_rank == 0){
-		int i;
-		for(i = 0; i < p; i++){
-			printf("%d ", gather[i]);
-		}
+		double end = MPI_Wtime();
+
+		printf("Execution Time: %f\n", end - start);
 	}
+
 
 	/* shut down MPI */
 	MPI_Finalize(); 
