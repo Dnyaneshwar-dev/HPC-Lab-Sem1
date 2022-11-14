@@ -6,9 +6,9 @@
 #include <mpi.h>
 #include <stdio.h>
 
-#define SIZE 8			/* Size of matrices */
+#define SIZE 1024			/* Size of matrices */
 
-int A[SIZE][SIZE], B[SIZE][1], C[SIZE][1];
+int A[SIZE][SIZE], B[SIZE][SIZE], C[SIZE][SIZE];
 
 void fill_matrix(int m[SIZE][SIZE])
 {
@@ -19,16 +19,9 @@ void fill_matrix(int m[SIZE][SIZE])
       m[i][j] = n++;
 }
 
-void fill_vector(int m[SIZE][1])
-{
-    static int n=1;
 
-    for(int i=0;i<SIZE;i++){
-        m[i][0] = n++;
-    }
-}
 
-void print_matrix(int m[SIZE][1])
+void print_matrix(int m[SIZE][SIZE])
 {
   int i, j = 0;
   for (i=0; i<SIZE; i++) {
@@ -68,8 +61,10 @@ int main(int argc, char *argv[])
 
   if (myrank==0) {
     fill_matrix(A);
-    fill_vector(B);
+    fill_matrix(B);
   }
+
+  double start = MPI_Wtime();
 
   MPI_Bcast (B, SIZE*SIZE, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Scatter (A, SIZE*SIZE/P, MPI_INT, A[from], SIZE*SIZE/P, MPI_INT, 0, MPI_COMM_WORLD);
@@ -83,15 +78,18 @@ int main(int argc, char *argv[])
     }
 
   MPI_Gather (C[from], SIZE*SIZE/P, MPI_INT, C, SIZE*SIZE/P, MPI_INT, 0, MPI_COMM_WORLD);
-
   if (myrank==0) {
-    printf("\n\n");
-    print_matrix(A);
-    printf("\n\n\t       * \n");
-    print_matrix(B);
-    printf("\n\n\t       = \n");
-    print_matrix(C);
-    printf("\n\n");
+    double finish = MPI_Wtime();
+
+    // printf("\n\n");
+    // print_matrix(A);
+    // printf("\n\n\t       * \n");
+    // print_matrix(B);
+    // printf("\n\n\t       = \n");
+    // print_matrix(C);
+    // printf("\n\n");
+
+    printf("Exection Time: %f\n", finish - start);
   }
 
   MPI_Finalize();

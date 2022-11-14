@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 // size of matrix
-#define N 50
+#define N 1000
 
 int main(int argc, char *argv[])
 {
@@ -72,13 +72,13 @@ int main(int argc, char *argv[])
         }
 
         // print multiplication result
-        printf("Result Matrix:\n");
-        for (i = 0; i < N; i++)
-        {
-            printf("%6.2f   ", c[i]);
-        }
+        // printf("Result Matrix:\n");
+        // for (i = 0; i < N; i++)
+        // {
+        //     printf("%6.2f   ", c[i]);
+        // }
 
-        printf("\n");
+        // printf("\n");
 
         double finish = MPI_Wtime();
         printf("Done in %f seconds.\n", finish - start); // total time spent
